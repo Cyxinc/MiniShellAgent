@@ -1,9 +1,9 @@
 # MiniShellAgent
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/) [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 <div align="center">
-  <img src="intro.png" alt="MiniShellAgent 界面展示" width="700" style="max-height: 450px;"/>
+  <img src="assets/intro.png" alt="MiniShellAgent 界面展示" width="700" style="max-height: 450px;"/>
 </div>
----
+
 ## 简介
 
 MiniShellAgent 是一个轻量级的命令行工具Agent，利用大语言模型为你的终端操作提供智能支持。它支持命令补全、自然语言交互和自动化任务执行，让命令行操作更加高效和直观。

@@ -1,15 +1,7 @@
-# MiniShellAgent依赖
-
-# 基础依赖
 python-dotenv>=1.0.0
-
-# OpenAI (如果使用OpenAI或兼容API)
 openai>=1.0.0
-
 # 本地Llama (如果使用本地模型)
 # llama-cpp-python>=0.2.0
-
-# 可选：更好的命令行体验
 rich>=13.0.0
 prompt-toolkit>=3.0.0
 
