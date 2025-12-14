@@ -29,7 +29,7 @@ MiniShellAgent遵循轻量、高效、简洁的设计理念。没有复杂的配
 
 1. **克隆仓库**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Cyxinc/MiniShellAgent
    cd homework1
    ```
 
@@ -158,7 +158,7 @@ MiniShellAgent 对不同的操作系统提供了不同程度的支持：
 2. **在 WSL 中安装 MiniShellAgent**：
    ```bash
    # 在 WSL 终端中
-   git clone <repository-url>
+   git clone https://github.com/Cyxinc/MiniShellAgent
    cd homework1
    pip install -r requirements.txt
    python3 install.py
