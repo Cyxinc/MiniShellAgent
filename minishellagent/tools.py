@@ -487,7 +487,16 @@ class TerminalTool:
             if is_directory_change_cmd:
                 # Run command and capture new working directory
                 # Use shell execution to honor aliases/functions
-                shell_cmd = f'{command} && pwd'
+                # Platform-specific command to get current directory
+                if _IS_WINDOWS:
+                    # Windows: use cd command (CMD) or Get-Location (PowerShell)
+                    if 'powershell' in os.environ.get('SHELL', '').lower() or 'powershell' in os.environ.get('COMSPEC', '').lower():
+                        shell_cmd = f'{command}; Get-Location'
+                    else:
+                        shell_cmd = f'{command} && cd'
+                else:
+                    # Unix/Linux: use pwd command
+                    shell_cmd = f'{command} && pwd'
                 result = subprocess.run(
                     shell_cmd,
                     shell=True,
@@ -542,13 +551,34 @@ class TerminalTool:
                 
                 # Even non-directory commands might change cwd, so recheck
                 try:
-                    pwd_result = subprocess.run(
-                        'pwd',
-                        shell=True,
-                        capture_output=True,
-                        text=True,
-                        timeout=1
-                    )
+                    # Platform-specific command to get current directory
+                    if _IS_WINDOWS:
+                        # Windows: use cd command (CMD) or Get-Location (PowerShell)
+                        if 'powershell' in os.environ.get('SHELL', '').lower() or 'powershell' in os.environ.get('COMSPEC', '').lower():
+                            pwd_cmd = ['powershell', '-Command', 'Get-Location']
+                            pwd_result = subprocess.run(
+                                pwd_cmd,
+                                capture_output=True,
+                                text=True,
+                                timeout=1
+                            )
+                        else:
+                            pwd_result = subprocess.run(
+                                'cd',
+                                shell=True,
+                                capture_output=True,
+                                text=True,
+                                timeout=1
+                            )
+                    else:
+                        # Unix/Linux: use pwd command
+                        pwd_result = subprocess.run(
+                            'pwd',
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
                     if pwd_result.returncode == 0:
                         new_dir = pwd_result.stdout.strip()
                         if new_dir and os.path.isdir(new_dir) and new_dir != os.getcwd():

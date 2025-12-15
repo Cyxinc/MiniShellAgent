@@ -40,7 +40,7 @@ MiniShellAgent遵循轻量、高效、简洁的设计理念。没有复杂的配
 
 3. **运行安装脚本**
    ```bash
-   python3 install.py
+   python install.py
    ```
 
 4. **配置环境变量**
@@ -161,7 +161,7 @@ MiniShellAgent 对不同的操作系统提供了不同程度的支持：
    git clone https://github.com/Cyxinc/MiniShellAgent
    cd homework1
    pip install -r requirements.txt
-   python3 install.py
+   python install.py
    ```
 
 3. **使用方式与 Linux 完全相同**

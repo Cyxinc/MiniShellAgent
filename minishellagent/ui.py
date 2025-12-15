@@ -280,33 +280,68 @@ class UI:
         # Use prompt_toolkit for proper keyboard interaction
         # Update the display via a simple loop
         import sys
-        import tty
-        import termios
         
-        def get_key():
-            """Get single keypress"""
-            if not sys.stdin.isatty():
-                return None
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
+        # Platform-specific key input handling
+        _IS_WINDOWS = platform.system() == "Windows"
+        
+        if _IS_WINDOWS:
+            # Windows: use msvcrt for key input
             try:
-                tty.setraw(sys.stdin.fileno())
-                ch = sys.stdin.read(1)
-                # Handle special keys
-                if ch == '\x1b':  # ESC
-                    ch = sys.stdin.read(2)
-                    if ch == '[A':  # Up arrow
-                        return 'up'
-                    elif ch == '[B':  # Down arrow
-                        return 'down'
-                elif ch == '\r' or ch == '\n':  # Enter
-                    return 'enter'
-                elif ch == '\x03':  # Ctrl+C
-                    raise KeyboardInterrupt
-                else:
-                    return ch
-            finally:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                import msvcrt
+            except ImportError:
+                msvcrt = None
+            
+            def get_key():
+                """Get single keypress (Windows)"""
+                if not msvcrt or not sys.stdin.isatty():
+                    return None
+                try:
+                    if msvcrt.kbhit():
+                        ch = msvcrt.getch()
+                        # Handle special keys on Windows
+                        if ch == b'\xe0':  # Extended key prefix
+                            ch = msvcrt.getch()
+                            if ch == b'H':  # Up arrow
+                                return 'up'
+                            elif ch == b'P':  # Down arrow
+                                return 'down'
+                        elif ch == b'\r' or ch == b'\n':  # Enter
+                            return 'enter'
+                        elif ch == b'\x03':  # Ctrl+C
+                            raise KeyboardInterrupt
+                        else:
+                            return ch.decode('utf-8', errors='ignore')
+                except Exception:
+                    return None
+        else:
+            # Unix/Linux: use termios
+            import tty
+            import termios
+            
+            def get_key():
+                """Get single keypress (Unix/Linux)"""
+                if not sys.stdin.isatty():
+                    return None
+                fd = sys.stdin.fileno()
+                old_settings = termios.tcgetattr(fd)
+                try:
+                    tty.setraw(sys.stdin.fileno())
+                    ch = sys.stdin.read(1)
+                    # Handle special keys
+                    if ch == '\x1b':  # ESC
+                        ch = sys.stdin.read(2)
+                        if ch == '[A':  # Up arrow
+                            return 'up'
+                        elif ch == '[B':  # Down arrow
+                            return 'down'
+                    elif ch == '\r' or ch == '\n':  # Enter
+                        return 'enter'
+                    elif ch == '\x03':  # Ctrl+C
+                        raise KeyboardInterrupt
+                    else:
+                        return ch
+                finally:
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         
         try:
             while True:
@@ -364,23 +399,57 @@ class UI:
             Current working directory path
         """
         try:
-            # Execute pwd command to get shell's current working directory
-            result = subprocess.run(
-                'pwd',
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=1
-            )
-            if result.returncode == 0:
-                cwd = result.stdout.strip()
-                if os.path.isdir(cwd):
-                    # Synchronously update Python process's working directory
-                    try:
-                        os.chdir(cwd)
-                    except Exception:
-                        pass
-                    return cwd
+            # Platform-specific command to get current directory
+            if platform.system() == "Windows":
+                # Windows: use cd command (CMD) or Get-Location (PowerShell)
+                # Try PowerShell first, fall back to CMD
+                try:
+                    result = subprocess.run(
+                        ['powershell', '-Command', 'Get-Location'],
+                        capture_output=True,
+                        text=True,
+                        timeout=1
+                    )
+                    if result.returncode == 0:
+                        cwd = result.stdout.strip()
+                    else:
+                        # Fall back to CMD
+                        result = subprocess.run(
+                            'cd',
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        cwd = result.stdout.strip() if result.returncode == 0 else None
+                except Exception:
+                    # Fall back to CMD
+                    result = subprocess.run(
+                        'cd',
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=1
+                    )
+                    cwd = result.stdout.strip() if result.returncode == 0 else None
+            else:
+                # Unix/Linux: use pwd command
+                result = subprocess.run(
+                    'pwd',
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=1
+                )
+                cwd = result.stdout.strip() if result.returncode == 0 else None
+            
+            if cwd and os.path.isdir(cwd):
+                # Synchronously update Python process's working directory
+                try:
+                    os.chdir(cwd)
+                except Exception:
+                    pass
+                return cwd
         except Exception:
             pass
         # Fall back to Python process's working directory
